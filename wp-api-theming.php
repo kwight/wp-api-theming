@@ -12,31 +12,31 @@
 /**
  * Add properties to posts and pages endpoints.
  */
-function wp_api_theming_posts_properties( $data ) {
+function wp_api_theming_posts_properties( $response ) {
 	// Set author's name.
-	$author = get_userdata( $data['author'] );
-	$data['author'] = array(
+	$author = get_userdata( $response->data['author'] );
+	$response->data['author'] = array(
 		'id' => $author->ID,
 		'link' => get_author_posts_url( $author->ID ),
 		'name' => $author->data->display_name,
 	);
 
 	// Add post classes.
-	$data['post_class'] = get_post_class( $data['id'] );
+	$response->data['post_class'] = get_post_class( $response->data['id'] );
 
 	// Add categories.
-	$categories = wp_api_theming_get_post_terms( $data['id'], 'category' );
+	$categories = wp_api_theming_get_post_terms( $response->data['id'], 'category' );
 	if ( ! empty( $categories ) ) {
-		$data['categories'] = $categories;
+		$response->data['categories'] = $categories;
 	}
 
 	// Add tags.
-	$tags = wp_api_theming_get_post_terms( $data['id'], 'post_tag' );
+	$tags = wp_api_theming_get_post_terms( $response->data, 'post_tag' );
 	if ( ! empty( $tags ) ) {
-		$data['tags'] = $tags;
-	} 
+		$response->data['tags'] = $tags;
+	}
 
-	return $data;
+	return $response;
 }
 add_filter( 'json_prepare_post', 'wp_api_theming_posts_properties' );
 add_filter( 'json_prepare_page', 'wp_api_theming_posts_properties' );
