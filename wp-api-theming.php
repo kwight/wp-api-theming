@@ -38,8 +38,8 @@ function wp_api_theming_posts_properties( $response ) {
 
 	return $response;
 }
-add_filter( 'json_prepare_post', 'wp_api_theming_posts_properties' );
-add_filter( 'json_prepare_page', 'wp_api_theming_posts_properties' );
+add_filter( 'rest_prepare_post', 'wp_api_theming_posts_properties' );
+add_filter( 'rest_prepare_page', 'wp_api_theming_posts_properties' );
 
 /**
  * Get a post's terms with archive links.
