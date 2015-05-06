@@ -22,7 +22,7 @@ function wp_api_theming_posts_properties( $response ) {
 	);
 
 	// Add post classes.
-	$response->data['post_class'] = get_post_class( $response->data['id'] );
+	$response->data['post_class'] = get_post_class( '', $response->data['id'] );
 
 	// Add categories.
 	$categories = wp_api_theming_get_post_terms( $response->data['id'], 'category' );
