@@ -12,28 +12,62 @@
 /**
  * Add properties to posts and pages endpoints.
  */
-function wp_api_theming_posts_properties() {
-	// Assemble schema info.
-	$schema = array(
-		'type'        => 'array',
-		'description' => 'Classes for an individual post or page, determined by post_class().',
-		'context'     => array( 'view' ),
+function wp_api_theming_posts_properties( $response ) {
+	// Set author's name.
+	$author = get_userdata( $response->data['author'] );
+	$response->data['author'] = array(
+		'id' => $author->ID,
+		'link' => get_author_posts_url( $author->ID ),
+		'name' => $author->data->display_name,
 	);
 
-	// Add the post_classes property to posts and pages.
-	register_api_field( array( 'post', 'page' ), 'post_classes', array(
-		'schema'       => $schema,
-		'get_callback' => 'wp_api_theming_get_post_classes',
-	) );
+	// Add post classes.
+	$response->data['post_class'] = get_post_class( '', $response->data['id'] );
+
+	// Add categories.
+	$categories = wp_api_theming_get_post_terms( $response->data['id'], 'category' );
+	if ( ! empty( $categories ) ) {
+		$response->data['categories'] = $categories;
+	}
+
+	// Add tags.
+	$tags = wp_api_theming_get_post_terms( $response->data, 'post_tag' );
+	if ( ! empty( $tags ) ) {
+		$response->data['tags'] = $tags;
+	}
+
+	return $response;
 }
-add_action( 'rest_api_init', 'wp_api_theming_posts_properties' );
+add_filter( 'rest_prepare_post', 'wp_api_theming_posts_properties' );
+add_filter( 'rest_prepare_page', 'wp_api_theming_posts_properties' );
 
 /**
  * Get a post's terms with archive links.
  */
-function wp_api_theming_get_post_classes( $post ) {
+function wp_api_theming_get_post_terms( $id = false, $taxonomy = 'category' ) {
 	// We need an ID for this one.
-	$classes = get_post_class( '', $post->id );
+	if ( ! $id ) {
+		return false;
+	}
 
-	return $classes;
+	// Validate the taxonomy argument.
+	$valid_tax = apply_filters( 'wp_api_theming_valid_tax', array( 'category', 'post_tag' ) );
+	$taxonomy = ( in_array( $taxonomy, $valid_tax ) ) ? $taxonomy : 'category';
+
+	// Fetch our terms.
+	$terms = wp_get_post_terms( absint( $id ), $taxonomy );
+
+	if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+		// Append a link property to each term.
+		foreach ( $terms as $term ) {
+			$link = get_term_link( $term );
+			$term->link = $link;
+		}
+	}
+
+	return $terms;
 }
+
+
+
+
